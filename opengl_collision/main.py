@@ -152,7 +152,7 @@ def main():
     if not glfw.init():
         return
 
-    window = glfw.create_window(WINDOW_WIDTH, WINDOW_HEIGHT, "Simulação Melhorada", None, None)
+    window = glfw.create_window(WINDOW_WIDTH, WINDOW_HEIGHT, "Simulação de Colisões", None, None)
     if not window:
         glfw.terminate()
         return
