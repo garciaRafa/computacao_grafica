@@ -102,11 +102,27 @@ def repel(c1, c2):
     )
 
 
+def mouse_button_callback(window, button, action, mods):
+    if action == glfw.PRESS:
+        x, y = glfw.get_cursor_pos(window)
+        y = WINDOW_HEIGHT - y
+        if button == glfw.MOUSE_BUTTON_LEFT:
+            new = Shape(create_circle(x, y), (1.0, 0.0, 0.0),
+                        (random.uniform(-1, 1), random.uniform(-1, 1)))
+            new.x, new.y, new.radius = x, y, 30
+            shapes.append(new)
+        elif button == glfw.MOUSE_BUTTON_RIGHT:
+            new = Shape(create_square(x, y), (0.0, 0.0, 1.0),
+                        (random.uniform(-1, 1), random.uniform(-1, 1)))
+            new.x, new.y, new.size = x - 20, y - 20, 40
+            shapes.append(new)
+            
+
 def main():
     if not glfw.init():
         return
 
-    window = glfw.create_window(WINDOW_WIDTH, WINDOW_HEIGHT, "Pipeline Programável", None, None)
+    window = glfw.create_window(WINDOW_WIDTH, WINDOW_HEIGHT, "Simulação de Colisões", None, None)
     if not window:
         glfw.terminate()
         return
@@ -137,6 +153,8 @@ def main():
         shape = Shape(create_square(x, y), (0.0, 0.0, 1.0), vel)
         shapes.append(shape)
 
+    glfw.set_mouse_button_callback(window, mouse_button_callback)
+
     while not glfw.window_should_close(window):
         glfw.poll_events()
         glClearColor(1, 1, 1, 1)
@@ -155,7 +173,7 @@ def main():
                         repel(b, a)
 
         glfw.swap_buffers(window)
-
+    
     glfw.terminate()
 
 if __name__ == "__main__":
