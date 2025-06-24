@@ -5,18 +5,32 @@ import numpy as np
 import math
 import random
 
+
 WINDOW_WIDTH = 800
 WINDOW_HEIGHT = 600
+SPEED_SCALE = 0.2
+FORCE_SCALE = 0.1
 
 shapes = []
+
 
 class Shape:
     def __init__(self, vertices, color, velocity):
         self.vertices = np.array(vertices, dtype=np.float32)
         self.color = color
-        self.velocity = velocity
+        self.velocity = (velocity[0] * SPEED_SCALE, velocity[1] * SPEED_SCALE)
         self.vbo = glGenBuffers(1)
         self.vao = glGenVertexArrays(1)
+
+        self.x = np.mean(self.vertices[::2])
+        self.y = np.mean(self.vertices[1::2])
+        if len(vertices) > 10:
+            self.radius = max(
+                [math.hypot(self.x - vx, self.y - vy)
+                 for vx, vy in zip(self.vertices[::2], self.vertices[1::2])]
+            )
+        else:
+            self.size = 40 
 
         glBindVertexArray(self.vao)
         glBindBuffer(GL_ARRAY_BUFFER, self.vbo)
@@ -35,7 +49,9 @@ class Shape:
         self.vertices[::2] += dx
         self.vertices[1::2] += dy
 
-        # Bounce on window border
+        self.x = np.mean(self.vertices[::2])
+        self.y = np.mean(self.vertices[1::2])
+
         if np.any(self.vertices[::2] < 0) or np.any(self.vertices[::2] > WINDOW_WIDTH):
             self.velocity = (-self.velocity[0], self.velocity[1])
         if np.any(self.vertices[1::2] < 0) or np.any(self.vertices[1::2] > WINDOW_HEIGHT):
@@ -43,6 +59,7 @@ class Shape:
 
         glBindBuffer(GL_ARRAY_BUFFER, self.vbo)
         glBufferSubData(GL_ARRAY_BUFFER, 0, self.vertices.nbytes, self.vertices)
+
 
 def create_circle(x, y, radius=30, segments=36):
     vertices = [(x, y)]
@@ -65,6 +82,26 @@ def create_square(x, y, size=40):
     ]
     return vertices
 
+
+def collide_circles(c1, c2):
+    dx = c1.x - c2.x
+    dy = c1.y - c2.y
+    dist = math.hypot(dx, dy)
+    return dist < c1.radius + c2.radius
+
+def repel(c1, c2):
+    dx = c1.x - c2.x
+    dy = c1.y - c2.y
+    dist = math.hypot(dx, dy)
+    if dist == 0:
+        dx, dy, dist = random.uniform(-1, 1), random.uniform(-1, 1), 1
+    force = FORCE_SCALE
+    c1.velocity = (
+        c1.velocity[0] + (dx / dist) * force,
+        c1.velocity[1] + (dy / dist) * force
+    )
+
+
 def main():
     if not glfw.init():
         return
@@ -76,7 +113,6 @@ def main():
 
     glfw.make_context_current(window)
 
-    # Load shaders
     with open("vertex_shader.glsl") as f:
         vertex_shader = f.read()
     with open("fragment_shader.glsl") as f:
@@ -89,20 +125,18 @@ def main():
 
     glUseProgram(shader)
 
-    # Criar algumas formas
     for _ in range(5):
         x, y = random.randint(100, 700), random.randint(100, 500)
-        vel = (random.uniform(-2, 2), random.uniform(-2, 2))
+        vel = (random.uniform(-1, 1), random.uniform(-1, 1))
         shape = Shape(create_circle(x, y), (1.0, 0.0, 0.0), vel)
         shapes.append(shape)
 
     for _ in range(5):
         x, y = random.randint(100, 700), random.randint(100, 500)
-        vel = (random.uniform(-2, 2), random.uniform(-2, 2))
+        vel = (random.uniform(-1, 1), random.uniform(-1, 1))
         shape = Shape(create_square(x, y), (0.0, 0.0, 1.0), vel)
         shapes.append(shape)
 
-    # Loop principal
     while not glfw.window_should_close(window):
         glfw.poll_events()
         glClearColor(1, 1, 1, 1)
@@ -111,6 +145,14 @@ def main():
         for shape in shapes:
             shape.update()
             shape.draw(shader)
+
+        for i in range(len(shapes)):
+            for j in range(i + 1, len(shapes)):
+                a, b = shapes[i], shapes[j]
+                if hasattr(a, 'radius') and hasattr(b, 'radius'):
+                    if collide_circles(a, b):
+                        repel(a, b)
+                        repel(b, a)
 
         glfw.swap_buffers(window)
 
