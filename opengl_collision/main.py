@@ -128,7 +128,13 @@ def mouse_button_callback(win, button, action, mods):
         y = WINDOW_HEIGHT - y * WINDOW_HEIGHT / fb_h
 
         if button == glfw.MOUSE_BUTTON_LEFT:
-            shapes.append(Shape(create_circle(x, y), (1, 0, 0), (random.uniform(-1, 1), random.uniform(-1, 1)), 'circle'))
+            radius = random.randint(20, 60)
+            shapes.append(Shape(
+                create_circle(x, y, radius),
+                (1, 0, 0),
+                (random.uniform(-1, 1), random.uniform(-1, 1)),
+                'circle'
+            ))
         elif button == glfw.MOUSE_BUTTON_RIGHT:
             w, h = random.randint(30, 70), random.randint(30, 70)
             shapes.append(Shape(create_rectangle(x, y, w, h), (0, 0, 1), (random.uniform(-1, 1), random.uniform(-1, 1)), 'rectangle', w, h))
@@ -171,7 +177,8 @@ def main():
 
     for _ in range(5):
         x, y = random.randint(100, 700), random.randint(100, 500)
-        shapes.append(Shape(create_circle(x, y), (1, 0, 0), (random.uniform(-1, 1), random.uniform(-1, 1)), 'circle'))
+        radius = random.randint(20, 60)
+        shapes.append(Shape(create_circle(x, y, radius), (1, 0, 0), (random.uniform(-1, 1), random.uniform(-1, 1)), 'circle'))
 
     for _ in range(5):
         x, y = random.randint(100, 700), random.randint(100, 500)
