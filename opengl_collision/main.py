@@ -89,6 +89,19 @@ def collide_circles(c1, c2):
     dist = math.hypot(dx, dy)
     return dist < c1.radius + c2.radius
 
+def collide_rects(r1, r2):
+    return not (
+        r1.x + r1.size < r2.x or r1.x > r2.x + r2.size or
+        r1.y + r1.size < r2.y or r1.y > r2.y + r2.size
+    )
+
+def collide_circle_rect(circle, rect):
+    closest_x = max(rect.x, min(circle.x, rect.x + rect.size))
+    closest_y = max(rect.y, min(circle.y, rect.y + rect.size))
+    dx = circle.x - closest_x
+    dy = circle.y - closest_y
+    return dx * dx + dy * dy < circle.radius ** 2
+
 def repel(c1, c2):
     dx = c1.x - c2.x
     dy = c1.y - c2.y
@@ -169,6 +182,18 @@ def main():
                 a, b = shapes[i], shapes[j]
                 if hasattr(a, 'radius') and hasattr(b, 'radius'):
                     if collide_circles(a, b):
+                        repel(a, b)
+                        repel(b, a)
+                elif hasattr(a, 'size') and hasattr(b, 'size'):
+                    if collide_rects(a, b):
+                        repel(a, b)
+                        repel(b, a)
+                elif hasattr(a, 'radius') and hasattr(b, 'size'):
+                    if collide_circle_rect(a, b):
+                        repel(a, b)
+                        repel(b, a)
+                elif hasattr(a, 'size') and hasattr(b, 'radius'):
+                    if collide_circle_rect(b, a):
                         repel(a, b)
                         repel(b, a)
 
